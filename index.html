@@ -435,7 +435,7 @@
         <img id="header-logo" src="PGH_TEMPLATE_PNP 1_2_2.jpg" alt="Logo">
         <div>
           <h2 id="header-title">Philippine General Hospital</h2>
-          <small id="header-address-sub">Taft Avenue, Manila, Philippines</small>
+          <small id="header-address-sub">Elgin Avenue, Pillbox Hill, Downtown QC, Philippines</small>
         </div>
       </div>
       <div>
@@ -462,11 +462,11 @@
               <div class="grid-2">
                 <div class="form-group">
                   <label>Patient Name</label>
-                  <input type="text" id="patient-name" placeholder="John / Jane Doe">
+                  <input type="text" id="patient-name" placeholder="PATIENT'S COMPLETE NAME (EXAMPLE: Ibarra Crisostomo Lacson)">
                 </div>
                 <div class="form-group">
                   <label>Overseeing Doctor Name</label>
-                  <input type="text" id="doctor-name" placeholder="Dr. Jose Rizal">
+                  <input type="text" id="doctor-name" placeholder="Dr. Ibarra Crisostomo Lacson, MD, Phd">
                 </div>
                 <div class="form-group">
                   <label>Doctor Position</label>
@@ -772,7 +772,7 @@
     let transactions = JSON.parse(localStorage.getItem('pgh_transactions')) || [];
     let settings = JSON.parse(localStorage.getItem('pgh_settings')) || {
       name: "Philippine General Hospital",
-      address: "Taft Ave, Ermita, Manila, 1000 Metro Manila",
+      address: "Elgin Avenue, Pillbox Hill, Downtown QC, Philippines",
       logo: "PGH_TEMPLATE_PNP 1_2_2.jpg"
     };
     let isLoggedIn = localStorage.getItem('pgh_logged_in') === 'true';

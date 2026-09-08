@@ -435,7 +435,7 @@
         <img id="header-logo" src="PGH_TEMPLATE_PNP 1_2_2.jpg" alt="Logo">
         <div>
           <h2 id="header-title">Philippine General Hospital</h2>
-          <small id="header-address-sub">Elgin Avenue, Pillbox Hill, Downtown QC, Philippines</small>
+          <small id="header-address-sub">Taft Avenue, Manila, Philippines</small>
         </div>
       </div>
       <div>
@@ -462,11 +462,11 @@
               <div class="grid-2">
                 <div class="form-group">
                   <label>Patient Name</label>
-                  <input type="text" id="patient-name" placeholder="COMPLETE PATIENT'S NAME">
+                  <input type="text" id="patient-name" placeholder="John / Jane Doe">
                 </div>
                 <div class="form-group">
                   <label>Overseeing Doctor Name</label>
-                  <input type="text" id="doctor-name" placeholder="Dr. Ibarra Crisostomo Lacson, MD">
+                  <input type="text" id="doctor-name" placeholder="Dr. Jose Rizal">
                 </div>
                 <div class="form-group">
                   <label>Doctor Position</label>
@@ -497,7 +497,7 @@
 
             <!-- Items Quick Select with Sub-tabs and Search -->
             <div class="card">
-              <h3><i class="fa-solid fa-plus"></i> Select Charged Medical Items / Supplies</h3>
+              <h3><i class="fa-solid fa-plus"></i> Select Charged Items / Supplies</h3>
               
               <input type="text" id="pos-search-input" class="search-box" placeholder="🔍 Search item name..." oninput="renderPOSSelectors()">
               
@@ -574,7 +574,7 @@
               <label>Category</label>
               <select id="new-item-category">
                 <option value="Medical Supply">Medical Supply</option>
-                <option value="Professional Fee">Professional Fee / Procedures</option>
+                <option value="Professional Fee">Professional Fee (Body Part)</option>
                 <option value="Blood Supply">Blood Supply</option>
               </select>
             </div>
@@ -592,7 +592,7 @@
                 <th>Name</th>
                 <th>Category</th>
                 <th>Price (PHP)</th>
-                <th>Action</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="items-table-body">
@@ -672,6 +672,8 @@
         
         <div style="font-size:0.85rem; margin-bottom:10px;">
           <div><strong>Date:</strong> <span id="receipt-date"></span></div>
+          <div><strong>Hospital ID:</strong> <span id="receipt-hospital-id"></span></div>
+          <div><strong>Patient Case #:</strong> <span id="receipt-patient-case"></span></div>
           <div><strong>Patient Name:</strong> <span id="receipt-patient"></span></div>
           <div><strong>Overseeing Doctor:</strong> <span id="receipt-doctor"></span> (<span id="receipt-position"></span>)</div>
         </div>
@@ -740,10 +742,10 @@
       // Body parts
       { id: 101, name: "HEAD INJURY", category: "Professional Fee", price: 1500 },
       { id: 102, name: "TORSO INJURY", category: "Professional Fee", price: 1400 },
-      { id: 103, name: "RIGHT ARM INJURY", category: "Professional Fee", price: 1200 },
-      { id: 104, name: "LEFT ARM INJURY", category: "Professional Fee", price: 1200 },
-      { id: 105, name: "RIGHT LEG INJURY", category: "Professional Fee", price: 1350 },
-      { id: 106, name: "LEFT LEG INJURY", category: "Professional Fee", price: 1350 },
+      { id: 103, name: "RIGHT ARM", category: "Professional Fee", price: 1200 },
+      { id: 104, name: "LEFT ARM", category: "Professional Fee", price: 1200 },
+      { id: 105, name: "RIGHT LEG", category: "Professional Fee", price: 1350 },
+      { id: 106, name: "LEFT LEG", category: "Professional Fee", price: 1350 },
 
       // Blood supply
       { id: 16, name: "A+ 250ml", category: "Blood Supply", price: 2000 },
@@ -770,13 +772,14 @@
     let transactions = JSON.parse(localStorage.getItem('pgh_transactions')) || [];
     let settings = JSON.parse(localStorage.getItem('pgh_settings')) || {
       name: "Philippine General Hospital",
-      address: "Elgin Avenue, Pillbox Hill, Downtown QC, Philippines",
+      address: "Taft Ave, Ermita, Manila, 1000 Metro Manila",
       logo: "PGH_TEMPLATE_PNP 1_2_2.jpg"
     };
     let isLoggedIn = localStorage.getItem('pgh_logged_in') === 'true';
     let cart = [];
     let salesChart = null;
     let activePOSCategory = 'ALL';
+    let currentActiveTransaction = null;
 
     // --- INITIALIZATION ---
     window.onload = function() {
@@ -944,6 +947,10 @@
     }
 
     // --- RECEIPT PREVIEW & PROCESS ---
+    function generateRandomID(prefix) {
+      return prefix + Math.floor(100000 + Math.random() * 900000);
+    }
+
     function prepareReceiptData() {
       const patient = document.getElementById('patient-name').value.trim();
       const doctor = document.getElementById('doctor-name').value.trim();
@@ -964,7 +971,16 @@
       let discountAmount = subtotal * (discPercent / 100);
       let total = subtotal - discountAmount;
 
+      if (!currentActiveTransaction) {
+        currentActiveTransaction = {
+          hospitalId: generateRandomID('HID-'),
+          caseNo: generateRandomID('CASE-')
+        };
+      }
+
       document.getElementById('receipt-date').innerText = new Date().toLocaleString();
+      document.getElementById('receipt-hospital-id').innerText = currentActiveTransaction.hospitalId;
+      document.getElementById('receipt-patient-case').innerText = currentActiveTransaction.caseNo;
       document.getElementById('receipt-patient').innerText = patient;
       document.getElementById('receipt-doctor').innerText = doctor;
       document.getElementById('receipt-position').innerText = position;
@@ -988,6 +1004,8 @@
       return {
         id: Date.now(),
         date: new Date().toLocaleString(),
+        hospitalId: currentActiveTransaction.hospitalId,
+        caseNo: currentActiveTransaction.caseNo,
         patient,
         doctor,
         position,
@@ -1022,6 +1040,7 @@
       window.print();
 
       cart = [];
+      currentActiveTransaction = null;
       document.getElementById('patient-name').value = '';
       document.getElementById('doctor-name').value = '';
       renderCart();
@@ -1050,6 +1069,24 @@
       renderItemsTable();
     });
 
+    function editItem(id) {
+      const item = items.find(i => i.id === id);
+      if(!item) return;
+
+      const newPrice = prompt(`Edit Price for ${item.name} (PHP):`, item.price);
+      if(newPrice === null) return;
+
+      const parsedPrice = parseFloat(newPrice);
+      if(!isNaN(parsedPrice) && parsedPrice >= 0) {
+        item.price = parsedPrice;
+        localStorage.setItem('pgh_items', JSON.stringify(items));
+        renderPOSSelectors();
+        renderItemsTable();
+      } else {
+        alert("Please enter a valid price!");
+      }
+    }
+
     function deleteItem(id) {
       if(confirm("Are you sure you want to remove this item?")) {
         items = items.filter(i => i.id !== id);
@@ -1068,7 +1105,10 @@
             <td><strong>${item.name}</strong></td>
             <td>${item.category}</td>
             <td>₱${item.price.toLocaleString()}</td>
-            <td><button class="btn btn-secondary" style="padding: 2px 8px; font-size:0.8rem;" onclick="deleteItem(${item.id})">Delete</button></td>
+            <td style="display:flex; gap:5px;">
+              <button class="btn btn-warning" style="padding: 2px 8px; font-size:0.8rem;" onclick="editItem(${item.id})">Edit</button>
+              <button class="btn btn-danger" style="padding: 2px 8px; font-size:0.8rem;" onclick="deleteItem(${item.id})">Delete</button>
+            </td>
           </tr>
         `;
       });
@@ -1147,6 +1187,8 @@
       if(!record) return;
 
       document.getElementById('receipt-date').innerText = record.date;
+      document.getElementById('receipt-hospital-id').innerText = record.hospitalId || generateRandomID('HID-');
+      document.getElementById('receipt-patient-case').innerText = record.caseNo || generateRandomID('CASE-');
       document.getElementById('receipt-patient').innerText = record.patient;
       document.getElementById('receipt-doctor').innerText = record.doctor;
       document.getElementById('receipt-position').innerText = record.position;
